@@ -52,9 +52,40 @@ loader.load("static/Stickman.glb", (gltf) => {
   scene.add(bodyModel);
 });
 
+// Додавання тексту "SWIPE TO START"
+const textTexture = new THREE.TextureLoader().load('static/Tutorial_SWIPE TO START.png');
+const textGeometry = new THREE.PlaneGeometry(3, 0.3);  // Розмір площини
+const textMaterial = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true });
+const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+textMesh.position.set(1, 1, 1);  // Позиція тексту внизу сцени
+textMesh.lookAt(2, 0, 6);
+scene.add(textMesh);
+
+// Додавання пальця
+const fingerTexture = new THREE.TextureLoader().load('static/Tutorial_Hand.png');
+const fingerGeometry = new THREE.PlaneGeometry(0.5, 0.5);  // Розмір площини пальця
+const fingerMaterial = new THREE.MeshBasicMaterial({ map: fingerTexture, transparent: true });
+const fingerMesh = new THREE.Mesh(fingerGeometry, fingerMaterial);
+fingerMesh.position.set(1, 0.5, 1);  // Позиція пальця нижче тексту
+fingerMesh.lookAt(2, 0, 6);
+scene.add(fingerMesh);
+
+// Анімація пальця (рух вліво-право)
+let fingerDirection = 1;  // Напрямок руху пальця (1 - праворуч, -1 - ліворуч)
+const fingerSpeed = 0.03;  // Швидкість руху пальця
+
+function animateFinger() {
+  fingerMesh.translateX(fingerDirection * fingerSpeed);
+  
+  if (fingerMesh.position.x > 1.5 || fingerMesh.position.x < 0.5) {
+    fingerDirection *= -1;  // Зміна напрямку руху на протилежний при досягненні краю
+  }
+}
+
 // Оновлення сцени та рендеринг
 function animate() {
   requestAnimationFrame(animate);
+  animateFinger();  // Виклик функції анімації пальця
   renderer.render(scene, camera);
 }
 
