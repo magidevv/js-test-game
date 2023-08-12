@@ -11,7 +11,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(2, 2, 5); // Позиція камери
+camera.position.set(2, 4, 6); // Позиція камери
 camera.lookAt(1, 3, 0); // Камера спрямована на центр сцени
 
 // Додавання рендерера
@@ -35,20 +35,23 @@ let trackModel, bodyModel, mixer, idleAction, runAction;
 // Завантаження доріжки
 loader.load("static/TrackFloor.glb", (gltf) => {
   trackModel = gltf.scene;
-  trackModel.scale.set(1, 1, 3);
+  trackModel.scale.set(1, 1, 4);
+  trackModel.position.set(0, 0, 3); // Позиціонування доріжки
   scene.add(trackModel);
-
-  // Позиціонування доріжки
-  trackModel.position.set(0, -1, 0);
-
-  // Позиціонування чоловічка на центрі доріжки
-  bodyModel.position.set(0, 0.5, 0); // Припустимо, що тіло на висоті 0.5
 });
+
+// Створення матеріалу з помаранчевим коліром
+const orangeMaterial = new THREE.MeshStandardMaterial({ color: 0xffa500 });
 
 // Завантаження чоловічка
 loader.load("static/Stickman.glb", (gltf) => {
   bodyModel = gltf.scene;
-  bodyModel.scale.set(0.6, 0.6, 0.6);
+  bodyModel.scale.set(0.8, 0.8, 0.8);
+  bodyModel.traverse((child) => {
+    if (child.isMesh) {
+      child.material = orangeMaterial; // Встановлення матеріалу на модель
+    }
+  });
   bodyModel.rotation.y = Math.PI; // Поворот тіла на 180 градусів (за ось Y)
   scene.add(bodyModel);
 
@@ -72,22 +75,22 @@ const textMaterial = new THREE.MeshBasicMaterial({
   transparent: true,
 });
 const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-textMesh.position.set(1, 1, 1); // Позиція тексту внизу сцени
-textMesh.lookAt(2, 0, 6);
+textMesh.position.set(1.5, 1.8, 3); // Позиція тексту внизу сцени
+textMesh.lookAt(2.5, 4, 9);
 scene.add(textMesh);
 
 // Додавання пальця
 const fingerTexture = new THREE.TextureLoader().load(
   "static/Tutorial_Hand.png"
 );
-const fingerGeometry = new THREE.PlaneGeometry(0.5, 0.5); // Розмір площини пальця
+const fingerGeometry = new THREE.PlaneGeometry(0.6, 0.6); // Розмір площини пальця
 const fingerMaterial = new THREE.MeshBasicMaterial({
   map: fingerTexture,
   transparent: true,
 });
 const fingerMesh = new THREE.Mesh(fingerGeometry, fingerMaterial);
-fingerMesh.position.set(1, 0.5, 1); // Позиція пальця нижче тексту
-fingerMesh.lookAt(2, 0, 6);
+fingerMesh.position.set(1.5, 1.2, 3); // Позиція пальця нижче тексту
+fingerMesh.lookAt(2.5, 4, 9);
 scene.add(fingerMesh);
 
 // Анімація пальця (рух вліво-право)
@@ -97,9 +100,49 @@ const fingerSpeed = 0.03; // Швидкість руху пальця
 function animateFinger() {
   fingerMesh.translateX(fingerDirection * fingerSpeed);
 
-  if (fingerMesh.position.x > 1.5 || fingerMesh.position.x < 0.5) {
+  if (fingerMesh.position.x > 2 || fingerMesh.position.x < 1) {
     fingerDirection *= -1; // Зміна напрямку руху на протилежний при досягненні краю
   }
+}
+
+// Завантаження моделі мозку
+const brainLoader = new GLTFLoader();
+
+// Масив матеріалів для різних кольорів мозків
+const materials = [
+  new THREE.MeshStandardMaterial({ color: 0xffa500 }), // Оранжевий
+  new THREE.MeshStandardMaterial({ color: 0x0000ff }), // Синій
+  new THREE.MeshStandardMaterial({ color: 0x800080 }), // Фіолетовий
+];
+
+// Змінна для відстеження часу для генерації ігрових предметів
+let lastSpawnTime = 0;
+
+// Змінна для відстеження інтервалу генерації ігрових предметів
+const spawnInterval = 1000;
+
+// Функція для генерації ігрового предмета
+function spawnGameItem() {
+  const randomColorIndex = Math.floor(Math.random() * 3); // Випадковий вибір індексу кольору (0, 1 або 2)
+  const randomMaterial = materials[randomColorIndex];
+
+  brainLoader.load("static/Brain.glb", (gltf) => {
+    const brainModel = gltf.scene;
+    brainModel.scale.set(1.5, 1.5, 1.5); // Збільшення мозку
+    brainModel.traverse((child) => {
+      if (child.isMesh) {
+        child.material = randomMaterial; // Застосування вибраного матеріалу
+      }
+    });
+
+    // Встановлення позиції на доріжці (попереду чоловічка)
+    const possibleXPositions = [-3, 0, 3]; // Опції можливих позицій по X
+    const randomXIndex = Math.floor(Math.random() * possibleXPositions.length);
+    const randomX = possibleXPositions[randomXIndex];
+    brainModel.position.set(randomX, 1, -15); // Припустимо, що доріжка починається з -10 по Z
+
+    scene.add(brainModel);
+  });
 }
 
 // Змінна для відстеження натискання на екран
@@ -118,11 +161,18 @@ function handleScreenPress() {
     idleAction.stop();
 
     // Змінити позицію камери
-    camera.position.set(0, 2, 5);
+    camera.position.set(0, 5, 5);
     camera.lookAt(0, 3, 0);
 
     // Початок анімації бігу
     runAction.play();
+
+    // Очищення сцени від попередніх ігрових предметів
+    scene.children.forEach((child) => {
+      if (child.isBrainModel) {
+        scene.remove(child);
+      }
+    });
   }
 }
 
@@ -140,6 +190,13 @@ function animate() {
   // Оновлення анімаційної системи
   if (mixer) {
     mixer.update(0.01);
+  }
+
+  // Генерація ігрових предметів з інтервалом
+  const currentTime = Date.now();
+  if (isPressed && currentTime - lastSpawnTime >= spawnInterval) {
+    spawnGameItem();
+    lastSpawnTime = currentTime;
   }
 
   renderer.render(scene, camera);
