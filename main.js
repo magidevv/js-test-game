@@ -161,7 +161,7 @@ function checkCollisions() {
   for (let i = brainModels.length - 1; i >= 0; i--) {
     const brainModel = brainModels[i];
     const distance = brainModel.position.distanceTo(bodyModel.position);
-    if (distance < 1.05) {
+    if (distance < 1.1) {
       brainModel.traverse((child) => {
         if (child.isMesh) {
           changeBodyColor(child.material); // Зміна кольору чоловічка
@@ -209,6 +209,49 @@ function handleScreenPress() {
 
 // Додати обробник натискання на екран
 document.addEventListener("click", handleScreenPress);
+
+let isSwiping = false; // Початковий стан: не відбувається свайп
+let previousCursorX = 0;
+let currentCursorX = 0;
+
+const laneWidth = 3; // Ширина однієї доріжки
+let currentLane = 0; // Початкова доріжка (центральна)
+
+// Обробник події початку свайпу на кнопку миші
+document.addEventListener("mousedown", (event) => {
+  isSwiping = true;
+  previousCursorX = event.clientX;
+  currentCursorX = event.clientX;
+});
+
+// Обробник події закінчення свайпу на кнопку миші
+document.addEventListener("mouseup", () => {
+  if (isSwiping) {
+    const deltaX = currentCursorX - previousCursorX;
+
+    // Обмеження руху в межах доріжок
+    const newLane = currentLane + Math.sign(deltaX); // Зміна доріжки відповідно до напрямку руху
+    const clampedLane = Math.max(-1, Math.min(1, newLane)); // Обмеження доріжки до діапазону -1, 0, 1
+
+    if (clampedLane !== currentLane) {
+      // Переміщення персонажа на нову доріжку
+      bodyModel.position.x = clampedLane * laneWidth;
+      currentLane = clampedLane;
+    }
+
+    isSwiping = false; // Завершення свайпу
+  }
+
+  previousCursorX = 0;
+  currentCursorX = 0;
+});
+
+// Обробник події руху курсора
+document.addEventListener("mousemove", (event) => {
+  if (isSwiping) {
+    currentCursorX = event.clientX;
+  }
+});
 
 // Оновлення сцени та рендеринг
 function animate() {
