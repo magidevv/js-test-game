@@ -107,6 +107,7 @@ function animateFinger() {
 
 // Завантаження моделі мозку
 const brainLoader = new GLTFLoader();
+const brainModels = [];
 
 // Масив матеріалів для різних кольорів мозків
 const materials = [
@@ -142,7 +143,37 @@ function spawnGameItem() {
     brainModel.position.set(randomX, 1, -15); // Припустимо, що доріжка починається з -10 по Z
 
     scene.add(brainModel);
+    brainModels.push(brainModel); // Додати мізку в масив для відстеження
   });
+}
+
+// Функція для зміни кольору моделі тіла
+function changeBodyColor(color) {
+  bodyModel.traverse((child) => {
+    if (child.isMesh) {
+      child.material = color; // Встановлення матеріалу на модель
+    }
+  });
+}
+
+// Перевірка взаємодії між мізками та чоловічком
+function checkCollisions() {
+  for (let i = brainModels.length - 1; i >= 0; i--) {
+    const brainModel = brainModels[i];
+    const distance = brainModel.position.distanceTo(bodyModel.position);
+    if (distance < 1.05) {
+      brainModel.traverse((child) => {
+        if (child.isMesh) {
+          changeBodyColor(child.material); // Зміна кольору чоловічка
+        }
+      });
+
+      // Визначте відстань, при якій вважатимете, що мізка досягла чоловічка
+      // Видаляйте мізку зі сцени та з масиву
+      scene.remove(brainModel);
+      brainModels.splice(i, 1);
+    }
+  }
 }
 
 // Змінна для відстеження натискання на екран
@@ -198,6 +229,13 @@ function animate() {
     spawnGameItem();
     lastSpawnTime = currentTime;
   }
+
+  // Оновлення позиції мізок
+  for (const brainModel of brainModels) {
+    brainModel.position.z += 0.05; // Рух мізки в напрямку до чоловічка
+  }
+
+  checkCollisions(); // Перевірка взаємодії між мізками та чоловічком
 
   renderer.render(scene, camera);
 }
