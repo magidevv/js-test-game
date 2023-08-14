@@ -1,29 +1,29 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
-// Створення сцени
+// Create the scene
 const scene = new THREE.Scene();
 
-// Створення камери
+// Create the camera
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
-camera.position.set(2, 4, 6); // Позиція камери
-camera.lookAt(1, 3, 0); // Камера спрямована на центр сцени
+camera.position.set(2, 4, 6);
+camera.lookAt(1, 3, 0);
 
-// Додавання рендерера
+// Add the renderer
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Додавання освітлення
+// Add ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 
-// Додавання напрямленого світла
+// Add directional light
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(1, 1, 1);
 scene.add(directionalLight);
@@ -32,101 +32,100 @@ const loader = new GLTFLoader();
 
 let trackModel, bodyModel, mixer, idleAction, runAction;
 
-// Завантаження доріжки
+// Load the track
 loader.load("static/TrackFloor.glb", (gltf) => {
   trackModel = gltf.scene;
   trackModel.scale.set(1, 1, 4);
-  trackModel.position.set(0, 0, 3); // Позиціонування доріжки
+  trackModel.position.set(0, 0, 3);
   scene.add(trackModel);
 });
 
-// Створення матеріалу з помаранчевим коліром
+// Create an orange material
 const orangeMaterial = new THREE.MeshStandardMaterial({ color: 0xffa500 });
 
-// Завантаження чоловічка
+// Load the stickman model
 loader.load("static/Stickman.glb", (gltf) => {
   bodyModel = gltf.scene;
   bodyModel.scale.set(0.8, 0.8, 0.8);
   bodyModel.traverse((child) => {
     if (child.isMesh) {
-      child.material = orangeMaterial; // Встановлення матеріалу на модель
+      child.material = orangeMaterial; // Set material on the model
     }
   });
-  bodyModel.rotation.y = Math.PI; // Поворот тіла на 180 градусів (за ось Y)
+  bodyModel.rotation.y = Math.PI; // Rotate the body by 180 degrees (around the Y axis)
   scene.add(bodyModel);
 
-  // Створення анімаційної системи
+  // Create an animation mixer
   mixer = new THREE.AnimationMixer(bodyModel);
 
-  // Отримання анімацій за індексами
+  // Get animations by index
   const animations = gltf.animations;
-  idleAction = mixer.clipAction(animations[3]); // Анімація стоїть за індексом 3
-  runAction = mixer.clipAction(animations[4]); // Анімація бігу за індексом 4
-  idleAction.play(); // Початково відтворюємо анімацію стоїть
+  idleAction = mixer.clipAction(animations[3]); // "Idle" animation at index 3
+  runAction = mixer.clipAction(animations[4]); // "Run" animation at index 4
+  idleAction.play(); // Initially play the "Idle" animation
 });
 
-// Додавання тексту "SWIPE TO START"
+// Add the "SWIPE TO START" text
 const textTexture = new THREE.TextureLoader().load(
   "static/Tutorial_SWIPE TO START.png"
 );
-const textGeometry = new THREE.PlaneGeometry(3, 0.3); // Розмір площини
+const textGeometry = new THREE.PlaneGeometry(3, 0.3); // Plane size
 const textMaterial = new THREE.MeshBasicMaterial({
   map: textTexture,
   transparent: true,
 });
 const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-textMesh.position.set(1.5, 1.8, 3); // Позиція тексту внизу сцени
+textMesh.position.set(1.5, 1.8, 3); // Text position at the bottom of the scene
 textMesh.lookAt(2.5, 4, 9);
 scene.add(textMesh);
 
-// Додавання пальця
+// Add the finger
 const fingerTexture = new THREE.TextureLoader().load(
   "static/Tutorial_Hand.png"
 );
-const fingerGeometry = new THREE.PlaneGeometry(0.6, 0.6); // Розмір площини пальця
+const fingerGeometry = new THREE.PlaneGeometry(0.6, 0.6);
 const fingerMaterial = new THREE.MeshBasicMaterial({
   map: fingerTexture,
   transparent: true,
 });
 const fingerMesh = new THREE.Mesh(fingerGeometry, fingerMaterial);
-fingerMesh.position.set(1.5, 1.2, 3); // Позиція пальця нижче тексту
+fingerMesh.position.set(1.5, 1.2, 3); // Finger position below the text
 fingerMesh.lookAt(2.5, 4, 9);
 scene.add(fingerMesh);
 
-// Анімація пальця (рух вліво-право)
-let fingerDirection = 1; // Напрямок руху пальця (1 - праворуч, -1 - ліворуч)
-const fingerSpeed = 0.03; // Швидкість руху пальця
+// Finger animation (left-right movement)
+let fingerDirection = 1; // Finger movement direction (1 - right, -1 - left)
+const fingerSpeed = 0.03; // Finger movement speed
 
 function animateFinger() {
   fingerMesh.translateX(fingerDirection * fingerSpeed);
 
   if (fingerMesh.position.x > 2 || fingerMesh.position.x < 1) {
-    fingerDirection *= -1; // Зміна напрямку руху на протилежний при досягненні краю
+    fingerDirection *= -1; // Change movement direction upon reaching the edge
   }
 }
 
-// Завантаження моделі мозку
+// Load brain models
 const brainLoader = new GLTFLoader();
 const brainModels = [];
 
-// Масив матеріалів для різних кольорів мозків
+// Array of materials for different brain colors
 const materials = [
-  new THREE.MeshStandardMaterial({ color: 0xffa500 }), // Оранжевий
-  new THREE.MeshStandardMaterial({ color: 0x0000ff }), // Синій
-  new THREE.MeshStandardMaterial({ color: 0x800080 }), // Фіолетовий
+  new THREE.MeshStandardMaterial({ color: 0xffa500 }), // Orange
+  new THREE.MeshStandardMaterial({ color: 0x0000ff }), // Blue
+  new THREE.MeshStandardMaterial({ color: 0x800080 }), // Purple
 ];
 
-// Змінна для відстеження часу для генерації ігрових предметів
+// Variables to track brain spawning time and interval
 let lastSpawnTime = 0;
-
-// Змінна для відстеження інтервалу генерації ігрових предметів
 const spawnInterval = 1000;
 
-// Функція для генерації ігрового предмета
+// Function to spawn brains
 function spawnBrains() {
   const availablePositions = [-3, 0, 3];
   const randomPositions = [];
 
+  // Select 2 random positions
   while (randomPositions.length < 2) {
     const randomIndex = Math.floor(Math.random() * availablePositions.length);
     const randomPosition = availablePositions[randomIndex];
@@ -136,16 +135,16 @@ function spawnBrains() {
     }
   }
 
-  const randomColorIndex = Math.floor(Math.random() * 3); // Випадковий вибір індексу кольору (0, 1 або 2)
+  const randomColorIndex = Math.floor(Math.random() * 3);
   const randomMaterial = materials[randomColorIndex];
 
   for (const randomX of randomPositions) {
     brainLoader.load("static/Brain.glb", (gltf) => {
       const brainModel = gltf.scene;
-      brainModel.scale.set(1.5, 1.5, 1.5); // Збільшення мозку
+      brainModel.scale.set(1.5, 1.5, 1.5);
       brainModel.traverse((child) => {
         if (child.isMesh) {
-          child.material = randomMaterial; // Застосування вибраного матеріалу
+          child.material = randomMaterial;
         }
       });
 
@@ -161,16 +160,16 @@ function spawnBrains() {
   }
 }
 
-// Функція для зміни кольору моделі тіла
+// Function to change body model color
 function changeBodyColor(color) {
   bodyModel.traverse((child) => {
     if (child.isMesh) {
-      child.material = color; // Встановлення матеріалу на модель
+      child.material = color;
     }
   });
 }
 
-// Перевірка взаємодії між мізками та чоловічком
+// Check collisions between brains and the stickman
 function checkCollisions() {
   for (let i = brainModels.length - 1; i >= 0; i--) {
     const brainModel = brainModels[i];
@@ -178,41 +177,33 @@ function checkCollisions() {
     if (distance < 1.1) {
       brainModel.traverse((child) => {
         if (child.isMesh) {
-          changeBodyColor(child.material); // Зміна кольору чоловічка
+          changeBodyColor(child.material);
         }
       });
 
-      // Визначте відстань, при якій вважатимете, що мізка досягла чоловічка
-      // Видаляйте мізку зі сцени та з масиву
       scene.remove(brainModel);
       brainModels.splice(i, 1);
     }
   }
 }
 
-// Змінна для відстеження натискання на екран
-let isPressed = false;
+let isPressed = false; // Track screen press
 
-// Функція для обробки натискання на екран
+// Handle screen press
 function handleScreenPress() {
   if (!isPressed && mixer) {
     isPressed = true;
 
-    // Приховати текст і палець
     textMesh.visible = false;
     fingerMesh.visible = false;
 
-    // Зупинка анімації стоїть
     idleAction.stop();
 
-    // Змінити позицію камери
     camera.position.set(0, 5, 5);
     camera.lookAt(0, 3, 0);
 
-    // Початок анімації бігу
     runAction.play();
 
-    // Очищення сцени від попередніх ігрових предметів
     scene.children.forEach((child) => {
       if (child.isBrainModel) {
         scene.remove(child);
@@ -221,78 +212,72 @@ function handleScreenPress() {
   }
 }
 
-// Додати обробник натискання на екран
 document.addEventListener("click", handleScreenPress);
 
-let isSwiping = false; // Початковий стан: не відбувається свайп
+let isSwiping = false;
 let previousCursorX = 0;
 let currentCursorX = 0;
 
-const laneWidth = 3; // Ширина однієї доріжки
-let currentLane = 0; // Початкова доріжка (центральна)
+const laneWidth = 3;
+let currentLane = 0;
 
-// Обробник події початку свайпу на кнопку миші
+// Handle mouse button down event
 document.addEventListener("mousedown", (event) => {
   isSwiping = true;
   previousCursorX = event.clientX;
   currentCursorX = event.clientX;
 });
 
-// Обробник події закінчення свайпу на кнопку миші
+// Handle mouse button up event
 document.addEventListener("mouseup", () => {
   if (isSwiping) {
     const deltaX = currentCursorX - previousCursorX;
 
-    // Обмеження руху в межах доріжок
-    const newLane = currentLane + Math.sign(deltaX); // Зміна доріжки відповідно до напрямку руху
-    const clampedLane = Math.max(-1, Math.min(1, newLane)); // Обмеження доріжки до діапазону -1, 0, 1
+    const newLane = currentLane + Math.sign(deltaX);
+    const clampedLane = Math.max(-1, Math.min(1, newLane));
 
     if (clampedLane !== currentLane) {
-      // Переміщення персонажа на нову доріжку
       bodyModel.position.x = clampedLane * laneWidth;
       currentLane = clampedLane;
     }
 
-    isSwiping = false; // Завершення свайпу
+    isSwiping = false;
   }
 
   previousCursorX = 0;
   currentCursorX = 0;
 });
 
-// Обробник події руху курсора
+// Handle cursor movement
 document.addEventListener("mousemove", (event) => {
   if (isSwiping) {
     currentCursorX = event.clientX;
   }
 });
 
-// Оновлення сцени та рендеринг
+// Update scene and rendering
 function animate() {
   requestAnimationFrame(animate);
 
   if (!isPressed) {
-    animateFinger(); // Виклик функції анімації пальця, якщо екран не був натиснутий
+    animateFinger();
   }
 
-  // Оновлення анімаційної системи
   if (mixer) {
     mixer.update(0.01);
   }
 
-  // Генерація ігрових предметів з інтервалом
   const currentTime = Date.now();
   if (isPressed && currentTime - lastSpawnTime >= spawnInterval) {
     spawnBrains();
     lastSpawnTime = currentTime;
   }
 
-  // Оновлення позиції мізок
   for (const brainModel of brainModels) {
-    brainModel.position.z += 0.05; // Рух мізки в напрямку до чоловічка
+    brainModel.position.z += 0.05;
   }
 
-  checkCollisions(); // Перевірка взаємодії між мізками та чоловічком
+  checkCollisions();
 
   renderer.render(scene, camera);
 }
