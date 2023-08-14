@@ -123,28 +123,42 @@ let lastSpawnTime = 0;
 const spawnInterval = 1000;
 
 // Функція для генерації ігрового предмета
-function spawnGameItem() {
+function spawnBrains() {
+  const availablePositions = [-3, 0, 3];
+  const randomPositions = [];
+
+  while (randomPositions.length < 2) {
+    const randomIndex = Math.floor(Math.random() * availablePositions.length);
+    const randomPosition = availablePositions[randomIndex];
+
+    if (!randomPositions.includes(randomPosition)) {
+      randomPositions.push(randomPosition);
+    }
+  }
+
   const randomColorIndex = Math.floor(Math.random() * 3); // Випадковий вибір індексу кольору (0, 1 або 2)
   const randomMaterial = materials[randomColorIndex];
 
-  brainLoader.load("static/Brain.glb", (gltf) => {
-    const brainModel = gltf.scene;
-    brainModel.scale.set(1.5, 1.5, 1.5); // Збільшення мозку
-    brainModel.traverse((child) => {
-      if (child.isMesh) {
-        child.material = randomMaterial; // Застосування вибраного матеріалу
-      }
+  for (const randomX of randomPositions) {
+    brainLoader.load("static/Brain.glb", (gltf) => {
+      const brainModel = gltf.scene;
+      brainModel.scale.set(1.5, 1.5, 1.5); // Збільшення мозку
+      brainModel.traverse((child) => {
+        if (child.isMesh) {
+          child.material = randomMaterial; // Застосування вибраного матеріалу
+        }
+      });
+
+      const yPos = 1;
+      const zPos = -15;
+
+      const xPos = randomX;
+      brainModel.position.set(xPos, yPos, zPos);
+
+      scene.add(brainModel);
+      brainModels.push(brainModel);
     });
-
-    // Встановлення позиції на доріжці (попереду чоловічка)
-    const possibleXPositions = [-3, 0, 3]; // Опції можливих позицій по X
-    const randomXIndex = Math.floor(Math.random() * possibleXPositions.length);
-    const randomX = possibleXPositions[randomXIndex];
-    brainModel.position.set(randomX, 1, -15); // Припустимо, що доріжка починається з -10 по Z
-
-    scene.add(brainModel);
-    brainModels.push(brainModel); // Додати мізку в масив для відстеження
-  });
+  }
 }
 
 // Функція для зміни кольору моделі тіла
@@ -269,7 +283,7 @@ function animate() {
   // Генерація ігрових предметів з інтервалом
   const currentTime = Date.now();
   if (isPressed && currentTime - lastSpawnTime >= spawnInterval) {
-    spawnGameItem();
+    spawnBrains();
     lastSpawnTime = currentTime;
   }
 
