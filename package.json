@@ -1,8 +1,18 @@
 {
   "dependencies": {
-    "three": "^0.155.0"
+    "three": "^0.155.0",
+    "three-addons": "^1.2.0",
+    "three-gltf-loader": "^1.111.0"
   },
   "devDependencies": {
+    "gh-pages": "^6.0.0",
+    "ts-loader": "^9.4.4",
     "vite": "^4.4.9"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "gh-pages -d ./dist"
   }
 }

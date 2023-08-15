@@ -1,5 +1,10 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import brainModel from "./static/Brain.glb";
+import stickmanModel from "./static/Stickman.glb";
+import trackFloorModel from "./static/TrackFloor.glb";
+import tutorialHandImg from "./static/Tutorial_Hand.png";
+import tutorialSwipeToStartImg from "./static/Tutorial_SWIPE TO START.png";
 
 // Create the scene
 const scene = new THREE.Scene();
@@ -33,7 +38,7 @@ const loader = new GLTFLoader();
 let trackModel, bodyModel, mixer, idleAction, runAction;
 
 // Load the track
-loader.load("static/TrackFloor.glb", (gltf) => {
+loader.load(trackFloorModel, (gltf) => {
   trackModel = gltf.scene;
   trackModel.scale.set(1, 1, 4);
   trackModel.position.set(0, 0, 3);
@@ -44,7 +49,7 @@ loader.load("static/TrackFloor.glb", (gltf) => {
 const orangeMaterial = new THREE.MeshStandardMaterial({ color: 0xffa500 });
 
 // Load the stickman model
-loader.load("static/Stickman.glb", (gltf) => {
+loader.load(stickmanModel, (gltf) => {
   bodyModel = gltf.scene;
   bodyModel.scale.set(0.8, 0.8, 0.8);
   bodyModel.traverse((child) => {
@@ -66,9 +71,7 @@ loader.load("static/Stickman.glb", (gltf) => {
 });
 
 // Add the "SWIPE TO START" text
-const textTexture = new THREE.TextureLoader().load(
-  "static/Tutorial_SWIPE TO START.png"
-);
+const textTexture = new THREE.TextureLoader().load(tutorialSwipeToStartImg);
 const textGeometry = new THREE.PlaneGeometry(3, 0.3); // Plane size
 const textMaterial = new THREE.MeshBasicMaterial({
   map: textTexture,
@@ -80,9 +83,7 @@ textMesh.lookAt(2.5, 4, 9);
 scene.add(textMesh);
 
 // Add the finger
-const fingerTexture = new THREE.TextureLoader().load(
-  "static/Tutorial_Hand.png"
-);
+const fingerTexture = new THREE.TextureLoader().load(tutorialHandImg);
 const fingerGeometry = new THREE.PlaneGeometry(0.6, 0.6);
 const fingerMaterial = new THREE.MeshBasicMaterial({
   map: fingerTexture,
@@ -139,7 +140,7 @@ function spawnBrains() {
   const randomMaterial = materials[randomColorIndex];
 
   for (const randomX of randomPositions) {
-    brainLoader.load("static/Brain.glb", (gltf) => {
+    brainLoader.load(brainModel, (gltf) => {
       const brainModel = gltf.scene;
       brainModel.scale.set(1.5, 1.5, 1.5);
       brainModel.traverse((child) => {
@@ -237,6 +238,7 @@ document.addEventListener("mouseup", () => {
     const clampedLane = Math.max(-1, Math.min(1, newLane));
 
     if (clampedLane !== currentLane) {
+      bodyModel.position.x = 0;
       bodyModel.position.x = clampedLane * laneWidth;
       currentLane = clampedLane;
     }
@@ -270,6 +272,7 @@ function animate() {
   const currentTime = Date.now();
   if (isPressed && currentTime - lastSpawnTime >= spawnInterval) {
     spawnBrains();
+
     lastSpawnTime = currentTime;
   }
 
